@@ -1,0 +1,37 @@
+version: '3'
+
+services:
+
+  server:
+    container_name: server
+    image: fedora
+    networks:
+      project:
+        aliases:
+          - server.local
+    volumes:
+      - ./Server/bin:/project
+
+  client_1:
+    container_name: client_1
+    image: fedora
+    networks:
+      project:
+        aliases:
+          - client1.local
+    volumes:
+      - ./Client/bin:/project
+
+  client_2:
+    container_name: client_2
+    image: fedora
+    networks:
+      project:
+        aliases:
+          - client2.local
+    volumes:
+      - ./Client/bin:/project
+
+networks:
+  project:
+    driver: bridge
