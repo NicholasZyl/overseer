@@ -4,18 +4,21 @@ services:
 
   server:
     container_name: server
-    image: madduci/docker-ubuntu-cpp:gcc-6
+    build:
+      context: ./
+      dockerfile: ./internals/Client/Dockerfile
     networks:
       project:
         aliases:
           - server.local
-    entrypoint:
     volumes:
       - ./:/project
 
   client_1:
     container_name: client_1
-    image: madduci/docker-ubuntu-cpp:gcc-6
+    build:
+      context: ./
+      dockerfile: ./internals/Client/Dockerfile
     networks:
       project:
         aliases:
@@ -26,7 +29,9 @@ services:
 
   client_2:
     container_name: client_2
-    image: madduci/docker-ubuntu-cpp:gcc-6
+    build:
+      context: ./
+      dockerfile: ./internals/Client/Dockerfile
     networks:
       project:
         aliases:
