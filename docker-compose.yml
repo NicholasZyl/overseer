@@ -4,33 +4,36 @@ services:
 
   server:
     container_name: server
-    image: fedora
+    image: madduci/docker-ubuntu-cpp:gcc-6
     networks:
       project:
         aliases:
           - server.local
+    entrypoint:
     volumes:
-      - ./Server/bin:/project
+      - ./:/project
 
   client_1:
     container_name: client_1
-    image: fedora
+    image: madduci/docker-ubuntu-cpp:gcc-6
     networks:
       project:
         aliases:
           - client1.local
+    entrypoint:
     volumes:
-      - ./Client/bin:/project
+      - ./:/project
 
   client_2:
     container_name: client_2
-    image: fedora
+    image: madduci/docker-ubuntu-cpp:gcc-6
     networks:
       project:
         aliases:
           - client2.local
+    entrypoint:
     volumes:
-      - ./Client/bin:/project
+      - ./:/project
 
 networks:
   project:
