@@ -8,12 +8,18 @@
 
 using namespace zylkowsk::Common::ErrorHandling;
 
-Exception::Exception(const char *format, ...)
+Exception::Exception(int code, const char *format, ...) : errorCode(code)
 {
     va_list args;
     va_start(args, format);
     vsnprintf(error, MAX_ERROR_LENGTH, format, args);
     va_end(args);
+}
+
+Exception::Exception(const char *format, ...) : Exception(99, format) {}
+
+const int Exception::code() {
+    return errorCode;
 }
 
 const char* Exception::what() const throw()

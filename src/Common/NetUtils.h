@@ -10,6 +10,7 @@
 #include <stdarg.h>
 #include <string>
 #include <string.h>
+#include <functional>
 
 namespace zylkowsk {
     namespace Common {
@@ -185,7 +186,7 @@ namespace zylkowsk {
                  *	@param func Function to process response from the server.
                  *	@throws Exception If socket cannot be created or connection cannot be established or closed.
                  */
-                void connectToServer(void (*func)(int, struct sockaddr_in));
+                void connectToServer(std::function<void(int, struct sockaddr_in)> func);
             };
         };
     };

@@ -255,7 +255,7 @@ unsigned long Client::getIp(const char *address)
     return ip;
 }
 
-void Client::connectToServer(void (*func)(int, struct sockaddr_in))
+void Client::connectToServer(std::function<void(int, struct sockaddr_in)> func)
 {
     int connectionSocket = socket(AF_INET, type, 0);
     if (-1 == connectionSocket) {

@@ -13,31 +13,32 @@ namespace zylkowsk {
     namespace Client {
         namespace ProcessList {
             /**
-             * @class ProcessesReader
-             * A class used to read all running processes on the host.
+             *  @class ProcessesReader
+             *  A class used to read all running processes on the host.
              */
             class ProcessesReader {
                 /**
-                 * Default directory to check for running processes.
+                 *  Default directory to check for running processes.
                  */
                 static const std::string procDir;
+
                 /**
-                 * Default file containing process name.
+                 *  Default file containing process name.
                  */
                 static const std::string procCmdFile;
 
                 /**
-                 * Extract name for the process with given PID.
+                 *  Extract name for the process with given PID.
                  *
-                 * @param pid Process id.
-                 * @return Name of the process.
+                 *  @param pid Process id.
+                 *  @return Name of the process.
                  */
                 std::string getProcessName(int pid);
             public:
                 /**
-                 * Get list of all running processes names.
+                 *  Get list of all running processes names.
                  *
-                 * @return List of processes names.
+                 *  @return List of processes names.
                  */
                 std::list<std::string> getRunningProcesses();
             };
