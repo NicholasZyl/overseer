@@ -6,13 +6,11 @@ services:
     container_name: server
     build:
       context: ./
-      dockerfile: ./internals/Client/Dockerfile
+      dockerfile: ./internals/Server/Dockerfile
     networks:
       project:
         aliases:
           - server.local
-    volumes:
-      - ./:/project
 
   client_1:
     container_name: client_1
@@ -22,10 +20,8 @@ services:
     networks:
       project:
         aliases:
-          - client1.local
-    entrypoint:
-    volumes:
-      - ./:/project
+          - nginx.local
+    entrypoint: nginx -g "daemon off;"
 
   client_2:
     container_name: client_2
@@ -35,10 +31,8 @@ services:
     networks:
       project:
         aliases:
-          - client2.local
-    entrypoint:
-    volumes:
-      - ./:/project
+          - supervisor.local
+    entrypoint: supervisord -n
 
 networks:
   project:
