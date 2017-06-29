@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <syslog.h>
 #include <sys/file.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <string>
 #include <unistd.h>
 
@@ -18,10 +20,8 @@ using namespace zylkowsk::Common::NetUtils;
 
 Server* Server::serverInstance = 0;
 
-Server::Server(std::string serverName, int port, ConnectionType type, bool asDaemon)
-{
-    name = serverName;
-    this->type = type;
+Server::Server(std::string serverName, int port, ConnectionType type, unsigned int childProcessesLimit, bool daemon) :
+        name(serverName), type(type), maxChildProcesses(childProcessesLimit), childProcessesCount(0), isParent(true), asDaemon(daemon) {
     if (asDaemon) {
         daemonize();
     }
@@ -48,6 +48,7 @@ void Server::initProcess()
 
     signal(SIGINT, Server::handleSignal);
     signal(SIGTERM, Server::handleSignal);
+    signal(SIGCHLD, Server::handleSignal);
 }
 
 void Server::createSocket(ConnectionType type)
@@ -55,6 +56,10 @@ void Server::createSocket(ConnectionType type)
     socketDesc = socket(AF_INET, type, 0);
     if (-1 == socketDesc) {
         throw Exception("Unable to create a socket with error: %s", strerror(errno));
+    }
+    int optval = 1;
+    if (-1 == setsockopt(socketDesc, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof optval)) {
+        throw Exception("Unable to set option on socket with error: %s", strerror(errno));
     }
 }
 
@@ -88,33 +93,37 @@ Server::~Server()
         logMessage(LOG_CRIT, errorMsg);
     }
 
-    if (-1 == flock(lockFile, LOCK_UN)) {
-        char errorMsg[MAX_BUFFER];
-        sprintf(errorMsg, "Unable to unlock the lock file with error: %s", strerror(errno));
-        logMessage(LOG_CRIT, errorMsg);
+    if (isParent) {
+        if (-1 == flock(lockFile, LOCK_UN)) {
+            char errorMsg[MAX_BUFFER];
+            sprintf(errorMsg, "Unable to unlock the lock file with error: %s", strerror(errno));
+            logMessage(LOG_CRIT, errorMsg);
+        }
+
+        char lockFileName[MAX_BUFFER];
+        sprintf(lockFileName, "/var/spool/%s.lock", name.c_str());
+        if (-1 == unlink(lockFileName)) {
+            char errorMsg[MAX_BUFFER];
+            sprintf(errorMsg, "Unable to remove the lock file with error: %s", strerror(errno));
+            logMessage(LOG_CRIT, errorMsg);
+        }
+
+        if (-1 == close(lockFile)) {
+            char errorMsg[MAX_BUFFER];
+            sprintf(errorMsg, "Unable to close the lock file descriptor with error: %s", strerror(errno));
+            logMessage(LOG_CRIT, errorMsg);
+        }
     }
 
-    char lockFileName[MAX_BUFFER];
-    sprintf(lockFileName, "/var/spool/%s.lock", name.c_str());
-    if (-1 == unlink(lockFileName)) {
-        char errorMsg[MAX_BUFFER];
-        sprintf(errorMsg, "Unable to remove the lock file with error: %s", strerror(errno));
-        logMessage(LOG_CRIT, errorMsg);
-    }
-
-    if (-1 == close(lockFile)) {
-        char errorMsg[MAX_BUFFER];
-        sprintf(errorMsg, "Unable to close the lock file descriptor with error: %s", strerror(errno));
-        logMessage(LOG_CRIT, errorMsg);
-    }
-
-    logMessage(LOG_INFO, "Server closed");
+    char closeServerMsg[MAX_BUFFER];
+    sprintf(closeServerMsg, "Server process #%d closed", getpid());
+    logMessage(LOG_INFO, closeServerMsg);
     if (asDaemon) {
         closelog();
     }
 }
 
-void Server::startListening(void (*func)(int, struct sockaddr_in))
+void Server::startListening(std::function<void(int, struct sockaddr_in)> func)
 {
     if (TCP == type) {
         if (-1 == listen(socketDesc, LISTEN_QUEUE_BACKLOG)) {
@@ -123,26 +132,44 @@ void Server::startListening(void (*func)(int, struct sockaddr_in))
         logMessage(LOG_INFO, "Server started listening");
     }
 
+    pid_t childPid;
     while (true) {
-        if (TCP == type) {
-            handleClientTCP(func);
-        } else if (UDP == type) {
-            handleClientUDP(func);
+        if (childProcessesCount < maxChildProcesses) {
+            childPid = fork();
+            if (0 == childPid) {
+                isParent = false;
+                while (true) {
+                    if (TCP == type) {
+                        handleClientTCP(func);
+                    } else if (UDP == type) {
+                        handleClientUDP(func);
+                    }
+                }
+            } else if (0 < childPid) {
+                ++childProcessesCount;
+            } else {
+                char errorMsg[MAX_BUFFER];
+                sprintf(errorMsg, "Unable to create child process with error: %s", strerror(errno));
+                logMessage(LOG_ERR, errorMsg);
+            }
+        } else {
+            sleep(1);
         }
     }
 }
 
-void Server::handleClientTCP(void (*func)(int, struct sockaddr_in))
+void Server::handleClientTCP(std::function<void(int, struct sockaddr_in)> func)
 {
     int incomingSocket;
     struct sockaddr_in incomingAddress;
-    socklen_t incomingAddresLength = sizeof(incomingAddress);
+    socklen_t incomingAddressLength = sizeof(incomingAddress);
 
-    incomingSocket = accept(socketDesc, (struct sockaddr *) &incomingAddress, &incomingAddresLength);
+    incomingSocket = accept(socketDesc, (struct sockaddr *) &incomingAddress, &incomingAddressLength);
     if (-1 == incomingSocket) {
         char errorMsg[MAX_BUFFER];
         sprintf(errorMsg, "Unable to accept connection from client on %s:%d with error: %s", inet_ntoa(incomingAddress.sin_addr), ntohs(incomingAddress.sin_port), strerror(errno));
         logMessage(LOG_CRIT, errorMsg);
+        return;
     }
     char msg[MAX_BUFFER];
     sprintf(msg, "Server received a connection from client on %s:%d", inet_ntoa(incomingAddress.sin_addr), ntohs(incomingAddress.sin_port));
@@ -162,7 +189,7 @@ void Server::handleClientTCP(void (*func)(int, struct sockaddr_in))
     logMessage(LOG_NOTICE, msg);
 }
 
-void Server::handleClientUDP(void (*func)(int, struct sockaddr_in))
+void Server::handleClientUDP(std::function<void(int, struct sockaddr_in)> func)
 {
     char receivedDatagram[MAX_BUFFER];
     struct sockaddr_in incomingAddress;
@@ -172,6 +199,7 @@ void Server::handleClientUDP(void (*func)(int, struct sockaddr_in))
         char errorMsg[MAX_BUFFER];
         sprintf(errorMsg, "Error while receiving datagram from %s:%d with error: %s", inet_ntoa(incomingAddress.sin_addr), ntohs(incomingAddress.sin_port), strerror(errno));
         logMessage(LOG_CRIT, errorMsg);
+        return;
     }
 
     char msg[MAX_BUFFER];
@@ -186,11 +214,22 @@ void Server::handleClientUDP(void (*func)(int, struct sockaddr_in))
 
 void Server::handleSignal(int sig)
 {
-    char msg[MAX_BUFFER];
-    sprintf(msg, "Server received signal %d", sig);
-    serverInstance->logMessage(LOG_NOTICE, msg);
-    serverInstance->~Server();
-    exit(EXIT_SUCCESS);
+    switch (sig) {
+        case SIGINT:
+        case SIGTERM:
+            char msg[MAX_BUFFER];
+            sprintf(msg, "Server received signal %d", sig);
+            serverInstance->logMessage(LOG_NOTICE, msg);
+            serverInstance->~Server();
+            exit(EXIT_SUCCESS);
+        case SIGCHLD:
+            while (0 < waitpid(-1, NULL, WNOHANG)) {
+                --serverInstance->childProcessesCount;
+            }
+            break;
+        default:
+            return;
+    }
 }
 
 void Server::logMessage(int level, const char *message)

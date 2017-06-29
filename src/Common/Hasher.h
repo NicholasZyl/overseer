@@ -24,6 +24,7 @@ namespace zylkowsk {
                  * @return Concatenated processes names.
                  */
                 std::string joinList(const std::list<std::string> &processes);
+
             public:
                 /**
                  * Calculate hash from passed processes list.

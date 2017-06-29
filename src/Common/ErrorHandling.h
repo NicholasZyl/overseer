@@ -5,7 +5,10 @@
 #ifndef PROJEKT_ERROR_HANDLING_H
 #define PROJEKT_ERROR_HANDLING_H
 
+
+#include <cstdarg>
 #include <exception>
+#include <string>
 
 #define MAX_ERROR_LENGTH 256
 
@@ -27,20 +30,37 @@ namespace zylkowsk {
                  */
                 char error[MAX_ERROR_LENGTH];
 
+                /**
+                 *	Prepare error message.
+                 *
+                 *	@param format Format in printf style.
+                 *	@param args Arguments passed to the formatted string
+                 */
+                void setErrorMessage(const char *format, va_list args);
+
             public:
                 /**
                  *	Constructor.
                  *	Exception allows to set errors in same format as printf function.
                  *
                  *	@param code Number representing error code.
-                 *	@param format Format is printf style.
+                 *	@param format Format in printf style.
+                 */
+                Exception(int code, std::string format, ...);
+
+                /**
+                 *	Constructor.
+                 *	Exception allows to set errors in same format as printf function.
+                 *
+                 *	@param code Number representing error code.
+                 *	@param format Format in printf style.
                  */
                 Exception(int code, const char *format, ...);
 
                 /**
                  *	Constructor that defaults code to 99.
                  *
-                 *	@param format Format is printf style.
+                 *	@param format Format in printf style.
                  */
                 Exception(const char *format, ...);
 

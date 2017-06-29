@@ -11,6 +11,7 @@ services:
       project:
         aliases:
           - server.local
+    entrypoint: ./build/Server
 
   client_1:
     container_name: client_1

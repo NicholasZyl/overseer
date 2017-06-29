@@ -5,6 +5,7 @@
 #ifndef PROJEKT_PROCESSLIST_H
 #define PROJEKT_PROCESSLIST_H
 
+
 #include <list>
 #include <stdio.h>
 #include <string>
@@ -34,6 +35,7 @@ namespace zylkowsk {
                  *  @return Name of the process.
                  */
                 std::string getProcessName(int pid);
+
             public:
                 /**
                  *  Get list of all running processes names.

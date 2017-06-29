@@ -94,13 +94,13 @@ WatchedHost HostsRegistrar::getWatchedHostData(const std::string &hostIp) {
 
         return WatchedHost(hostIp, storedHost["interval"].as<unsigned>(), storedHost["next_message_expected"].as<time_t>(), storedHost["processes_hash"].as<std::string>(), storedHost["processes"].as<std::list<std::string>>());
     } catch (YAML::BadFile) {
-        throw Exception(ERR_CODE_UNKNOWN_CMD, ERR_UNKNOWN_CMD.c_str());
+        throw Exception(ERR_CODE_UNKNOWN_CMD, ERR_UNKNOWN_CMD);
     }
 }
 
 void HostsRegistrar::registerHost(const std::string &hostIp, const unsigned int interval) {
     if (isHostRegistered(hostIp)) {
-        throw Exception(ERR_CODE_HOST_WATCHED, ERR_HOST_WATCHED.c_str());
+        throw Exception(ERR_CODE_HOST_WATCHED, ERR_HOST_WATCHED);
     }
     WatchedHost host(hostIp, interval);
     saveWatchedHostData(host);
@@ -108,7 +108,7 @@ void HostsRegistrar::registerHost(const std::string &hostIp, const unsigned int 
 
 bool HostsRegistrar::processMessageFromHost(const std::string &hostIp, const std::string &processesListHash) {
     if (!isHostRegistered(hostIp)) {
-        throw Exception(ERR_CODE_HOST_NOT_WATCHED, ERR_HOST_NOT_WATCHED.c_str());
+        throw Exception(ERR_CODE_HOST_NOT_WATCHED, ERR_HOST_NOT_WATCHED);
     }
     WatchedHost host = getWatchedHostData(hostIp);
 

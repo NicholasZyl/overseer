@@ -5,6 +5,7 @@
 #ifndef PROJEKT_COMMUNICATION_H
 #define PROJEKT_COMMUNICATION_H
 
+
 #include <string>
 
 namespace zylkowsk {

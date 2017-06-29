@@ -5,6 +5,7 @@
 #ifndef PROJEKT_WATCHERCOMMUNICATOR_H
 #define PROJEKT_WATCHERCOMMUNICATOR_H
 
+
 #include "../Common/Hasher.h"
 #include "../Common/NetUtils.h"
 #include <list>
@@ -30,6 +31,7 @@ namespace zylkowsk {
                  *  Hasher used to prepare processes list hash.
                  */
                 ProcessListHasher processListHasher;
+
             public:
                 /**
                  *  Constructor of the communicator.

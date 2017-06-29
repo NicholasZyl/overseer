@@ -7,7 +7,7 @@
 #include "WatcherConnection.h"
 #include <unistd.h>
 
-#define MAX_BUFFER 256
+#define MAX_BUFFER 1024
 
 using namespace zylkowsk::Client::WatcherConnection;
 using namespace zylkowsk::Common::Communication;
@@ -30,9 +30,9 @@ void Communicator::registerClient(unsigned int interval) {
         auto response = std::string(responseBuffer);
 
         if (0 == response.compare(ERR_INVALID_INTERVAL)) {
-            throw Exception(ERR_CODE_INVALID_INTERVAL, ERR_INVALID_INTERVAL.c_str());
+            throw Exception(ERR_CODE_INVALID_INTERVAL, ERR_INVALID_INTERVAL);
         } else if (0 == response.compare(ERR_HOST_WATCHED)) {
-            throw Exception(ERR_CODE_HOST_WATCHED, ERR_HOST_WATCHED.c_str());
+            throw Exception(ERR_CODE_HOST_WATCHED, ERR_HOST_WATCHED);
         }
     });
 }
@@ -53,9 +53,10 @@ void Communicator::sendProcessesList(std::list<std::string> processes) {
 
         if (0 == response.compare(RESPONSE_SEND_PROCESSES)) {
             for (auto process : processes) {
+                process.append("\n");
                 write(socket, process.c_str(), strlen(process.c_str()));
             }
-            write(socket, "", strlen(""));
+            write(socket, "\n", strlen("\n"));
 
             memset(responseBuffer, 0, sizeof(responseBuffer));
             while (0 < (readLen = read(socket, responseBuffer, MAX_BUFFER))) {
@@ -64,10 +65,10 @@ void Communicator::sendProcessesList(std::list<std::string> processes) {
             response = std::string(responseBuffer);
 
             if (0 == response.compare(ERR_INVALID_LIST)) {
-                throw Exception(ERR_CODE_INVALID_LIST, ERR_INVALID_LIST.c_str());
+                throw Exception(ERR_CODE_INVALID_LIST, ERR_INVALID_LIST);
             }
         } else if (0 == response.compare(ERR_HOST_NOT_WATCHED)) {
-            throw Exception(ERR_CODE_HOST_NOT_WATCHED, ERR_HOST_NOT_WATCHED.c_str());
+            throw Exception(ERR_CODE_HOST_NOT_WATCHED, ERR_HOST_NOT_WATCHED);
         }
     });
 }

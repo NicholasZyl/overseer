@@ -5,12 +5,13 @@
 #ifndef PROJEKT_NET_UTILS_H
 #define PROJEKT_NET_UTILS_H
 
+
 #include <arpa/inet.h>
 #include <exception>
+#include <functional>
 #include <stdarg.h>
 #include <string>
 #include <string.h>
-#include <functional>
 
 namespace zylkowsk {
     namespace Common {
@@ -59,6 +60,21 @@ namespace zylkowsk {
                 bool asDaemon;
 
                 /**
+                 *  Limit of the child processes used to handle incoming connections.
+                 */
+                unsigned int maxChildProcesses;
+
+                /**
+                 *  Current child processes.
+                 */
+                unsigned int childProcessesCount;
+
+                /**
+                 * Is this process a child one?
+                 */
+                bool isParent;
+
+                /**
                  *	Internal method to init server process.
                  *	@throws zylkowsk::Common::ErrorHandling::Exception If server cannot be created cause another server process is already running.
                  */
@@ -88,13 +104,13 @@ namespace zylkowsk {
                  *	Method to handle incoming connection with TCP.
                  *	@throws zylkowsk::Common::ErrorHandling::Exception In case of error during opening or closing connection with the client.
                  */
-                void handleClientTCP(void (*func)(int, struct sockaddr_in));
+                void handleClientTCP(std::function<void(int, struct sockaddr_in)> func);
 
                 /**
                  *	Method to handle incoming connection with UDP.
                  *	@throws zylkowsk::Common::ErrorHandling::Exception In case of error during opening or closing connection with the client.
                  */
-                void handleClientUDP(void (*func)(int, struct sockaddr_in));
+                void handleClientUDP(std::function<void(int, struct sockaddr_in)> func);
 
                 /**
                  *	Log message with given level to syslog if turned on.
@@ -106,14 +122,16 @@ namespace zylkowsk {
             public:
                 /**
                  * 	Constructor of the server. Note that server is not yet listening to the connections.
+                 *
                  *	@see listen()
                  *	@param serverName Name of the server.
                  *	@param port Number of the port server will be listening on.
                  *	@param type Type of the connection server will be responding to.
-                 *	@param useSyslog Should server be run as a daemon.
+                 *	@param childProcessesLimit Limit of the child processes used to handle incoming connections.
+                 *	@param daemon Should server be run as a daemon.
                  *	@throws zylkowsk::Common::ErrorHandling::Exception If socket cannot be created or bound to given port.
                  */
-                Server(std::string serverName, int port, ConnectionType type, bool asDaemon);
+                Server(std::string serverName, int port, ConnectionType type, unsigned int childProcessesLimit, bool daemon);
 
                 /**
                  *	Destructor. Server closes connections on the socket that it was working on.
@@ -121,11 +139,13 @@ namespace zylkowsk {
                 ~Server();
 
                 /**
-                 *	Start listening to the connections and process them with function passed as an argument.
-                 *	@param func Function to properly process received connection. Function must take int as a parameter with socket descriptor.
+                 *	Server use preforking to create child processes that are listening to the connections and process them with function passed as an argument.
+                 *	If any of child processes die, a new one is forked and starts to listen for connections.
+                 *
+                 *	@param func Function to properly process received connection. Function must take int as a parameter with socket descriptor and structure with sockaddr.
                  *	@throws zylkowsk::Common::ErrorHandling::Exception If socket cannot be set to listening or during opening or closing connection with the client.
                  */
-                void startListening(void (*func)(int, struct sockaddr_in));
+                void startListening(std::function<void(int, struct sockaddr_in)> func);
 
                 /**
                  *	Handle received signals.
@@ -192,4 +212,4 @@ namespace zylkowsk {
     };
 };
 
-#endif //PROJEKT_ERROR_HANDLING_H
+#endif //PROJEKT_NET_UTILS_H

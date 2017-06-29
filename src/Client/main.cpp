@@ -44,10 +44,15 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    ProcessesReader processesReader;
-    while (true) {
-        communicator.sendProcessesList(processesReader.getRunningProcesses());
+    try {
+        ProcessesReader processesReader;
+        while (true) {
+            communicator.sendProcessesList(processesReader.getRunningProcesses());
 
-        sleep((unsigned) (interval * MILISECONDS_IN_SECOND));
+            sleep((unsigned) (interval * MILISECONDS_IN_SECOND));
+        }
+    } catch (Exception &e) {
+        fprintf(stderr, "%s\n", e.what());
+        return e.code();
     }
 }

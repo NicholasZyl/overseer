@@ -153,6 +153,7 @@ namespace zylkowsk {
                  * @throws zylkowsk::Common::ErrorHandling::Exception If storage file does not exist.
                  */
                 WatchedHost getWatchedHostData(const std::string &hostIp);
+
             public:
                 /**
                  * Register a new client as a watched host.
@@ -180,7 +181,7 @@ namespace zylkowsk {
                  * @param hostIp IP address of the watched host.
                  * @param processesListHash Hash of the processes list.
                  * @param processes List of the processes run on the watched client.
-                 * @throws zylkowsk::Common::ErrorHandling::Exception If host is already watched.
+                 * @throws zylkowsk::Common::ErrorHandling::Exception If host is not watched by the server.
                  */
                 void storeHostChangedProcessesList(const std::string &hostIp, const std::string &processesListHash,
                                                    const std::list<std::string> &processes);
