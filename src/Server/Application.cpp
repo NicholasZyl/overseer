@@ -5,29 +5,28 @@
 #include "../Common/Communication.h"
 #include "../Common/ErrorHandling.h"
 #include "../Common/NetUtils.h"
-#include "Server.h"
+#include "Application.h"
 #include <functional>
 #include <sstream>
+#include <syslog.h>
 #include <unistd.h>
 
 #define MAX_BUFFER 2048
 
 using namespace std::placeholders;
-using namespace zylkowsk::Common::ErrorHandling;
-using namespace zylkowsk::Common::Communication;
 using namespace zylkowsk::Common;
 using namespace zylkowsk::Server;
 
-Server::Server(HostsRegistrar hostsRegistrar, Hasher::ProcessListHasher processListHasher)
-        : registrar(hostsRegistrar), hasher(processListHasher) {}
+Application::Application(HostsRegistrar hostsRegistrar, Hasher hasher, Logger logger)
+        : registrar(hostsRegistrar), hasher(hasher), logger(logger) {}
 
-void Server::run(int port, unsigned int  processesLimit, bool asDaemon) {
-    NetUtils::Server baseServer = NetUtils::Server("Overseer", port, NetUtils::TCP, processesLimit, asDaemon);
-    auto connectionProcessing = std::bind(&Server::processIncomingConnection, this, _1, _2);
-    baseServer.startListening(connectionProcessing);
+void Application::run(int port, unsigned int  processesLimit, bool asDaemon) {
+    class Server server("Overseer", port, TCP, processesLimit, asDaemon, logger);
+    auto connectionProcessing = std::bind(&Application::processIncomingConnection, this, _1, _2);
+    server.startListening(connectionProcessing);
 }
 
-void Server::processIncomingConnection(int incomingSocket, struct sockaddr_in incomingAddress) {
+void Application::processIncomingConnection(int incomingSocket, struct sockaddr_in incomingAddress) {
     char commandBuffer[MAX_BUFFER];
     ssize_t readLen;
     if (0 < (readLen = read(incomingSocket, commandBuffer, MAX_BUFFER))) {
@@ -48,24 +47,40 @@ void Server::processIncomingConnection(int incomingSocket, struct sockaddr_in in
             throw Exception(ERR_CODE_UNKNOWN_CMD, ERR_UNKNOWN_CMD);
         }
     } catch (Exception &e) {
+        std::stringstream logMessage;
+        logMessage << "Error occurred: " << e.what();
+        logger.log(LOG_NOTICE, logMessage.str());
+
         write(incomingSocket, e.what(), strlen(e.what()));
     }
 }
 
-void Server::processHostRegistration(int incomingSocket, std::string hostIp, std::string commandArgument) {
+void Application::processHostRegistration(int incomingSocket, std::string hostIp, std::string commandArgument) {
     unsigned int interval;
     if (0 == (interval = (unsigned int) atoi(commandArgument.c_str()))) {
         throw Exception(ERR_CODE_INVALID_INTERVAL, ERR_INVALID_INTERVAL);
     }
     registrar.registerHost(hostIp, interval);
 
+    std::stringstream logMessage;
+    logMessage << "Registered a new host: " << hostIp;
+    logger.log(LOG_NOTICE, logMessage.str());
+
     write(incomingSocket, RESPONSE_REGISTERED.c_str(), strlen(RESPONSE_REGISTERED.c_str()));
 }
 
-void Server::processHostProcessesMessage(int incomingSocket, std::string hostIp, std::string commandArgument) {
+void Application::processHostProcessesMessage(int incomingSocket, std::string hostIp, std::string commandArgument) {
     if (registrar.processMessageFromHost(hostIp, commandArgument)) {
+        std::stringstream logMessage;
+        logMessage << "Watched host " << hostIp << ": no changes in processes list";
+        logger.log(LOG_NOTICE, logMessage.str());
+
         write(incomingSocket, RESPONSE_NO_CHANGES_IN_PROCESSES.c_str(), strlen(RESPONSE_NO_CHANGES_IN_PROCESSES.c_str()));
     } else {
+        std::stringstream logMessage;
+        logMessage << "Watched host " << hostIp << ": processes list changed";
+        logger.log(LOG_NOTICE, logMessage.str());
+
         write(incomingSocket, RESPONSE_SEND_PROCESSES.c_str(), strlen(RESPONSE_SEND_PROCESSES.c_str()));
         char messageBuffer[MAX_BUFFER];
         ssize_t readLen;
@@ -86,8 +101,16 @@ void Server::processHostProcessesMessage(int incomingSocket, std::string hostIp,
         const std::string calculatedHash = hasher.hashList(processes);
         if (0 == commandArgument.compare(calculatedHash)) {
             registrar.storeHostChangedProcessesList(hostIp, calculatedHash, processes);
+
+            std::stringstream logMessage;
+            logMessage << "Watched host " << hostIp << ": changed list saved";
+            logger.log(LOG_NOTICE, logMessage.str());
             write(incomingSocket, RESPONSE_PROCESSES_SAVED.c_str(), strlen(RESPONSE_PROCESSES_SAVED.c_str()));
         } else {
+            std::stringstream logMessage;
+            logMessage << "Watched host " << hostIp << ": malformed list received";
+            logger.log(LOG_NOTICE, logMessage.str());
+
             write(incomingSocket, ERR_INVALID_LIST.c_str(), strlen(ERR_INVALID_LIST.c_str()));
         }
     }

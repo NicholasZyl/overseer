@@ -10,8 +10,7 @@
 #include <yaml-cpp/yaml.h>
 #include <sys/stat.h>
 
-using namespace zylkowsk::Common::Communication;
-using namespace zylkowsk::Common::ErrorHandling;
+using namespace zylkowsk::Common;
 using namespace zylkowsk::Server::Overseer;
 
 const std::string HostsRegistrar::storageDir = "/var/overseer/";

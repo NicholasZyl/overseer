@@ -4,7 +4,7 @@
 
 #include "ErrorHandling.h"
 
-using namespace zylkowsk::Common::ErrorHandling;
+using namespace zylkowsk::Common;
 
 Exception::Exception(int code, std::string format, ...) : errorCode(code) {
     va_list args;

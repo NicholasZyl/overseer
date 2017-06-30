@@ -14,68 +14,66 @@
 
 namespace zylkowsk {
     namespace Common {
-        namespace ErrorHandling {
+        /**
+         *	@class Exception
+         *	Exception class thrown in case of errors.
+         */
+        class Exception : public std::exception {
             /**
-             *	@class Exception
-             *	Exception class thrown in case of errors.
+             *  Error code.
              */
-            class Exception : public std::exception {
-                /**
-                 *  Error code.
-                 */
-                int errorCode;
+            int errorCode;
 
-                /**
-                 *	Error that happened.
-                 */
-                char error[MAX_ERROR_LENGTH];
+            /**
+             *	Error that happened.
+             */
+            char error[MAX_ERROR_LENGTH];
 
-                /**
-                 *	Prepare error message.
-                 *
-                 *	@param format Format in printf style.
-                 *	@param args Arguments passed to the formatted string
-                 */
-                void setErrorMessage(const char *format, va_list args);
+            /**
+             *	Prepare error message.
+             *
+             *	@param format Format in printf style.
+             *	@param args Arguments passed to the formatted string
+             */
+            void setErrorMessage(const char *format, va_list args);
 
-            public:
-                /**
-                 *	Constructor.
-                 *	Exception allows to set errors in same format as printf function.
-                 *
-                 *	@param code Number representing error code.
-                 *	@param format Format in printf style.
-                 */
-                Exception(int code, std::string format, ...);
+        public:
+            /**
+             *	Constructor.
+             *	Exception allows to set errors in same format as printf function.
+             *
+             *	@param code Number representing error code.
+             *	@param format Format in printf style.
+             */
+            Exception(int code, std::string format, ...);
 
-                /**
-                 *	Constructor.
-                 *	Exception allows to set errors in same format as printf function.
-                 *
-                 *	@param code Number representing error code.
-                 *	@param format Format in printf style.
-                 */
-                Exception(int code, const char *format, ...);
+            /**
+             *	Constructor.
+             *	Exception allows to set errors in same format as printf function.
+             *
+             *	@param code Number representing error code.
+             *	@param format Format in printf style.
+             */
+            Exception(int code, const char *format, ...);
 
-                /**
-                 *	Constructor that defaults code to 99.
-                 *
-                 *	@param format Format in printf style.
-                 */
-                Exception(const char *format, ...);
+            /**
+             *	Constructor that defaults code to 99.
+             *
+             *	@param format Format in printf style.
+             */
+            Exception(const char *format, ...);
 
-                /**
-                 * Get error code.
-                 *
-                 * @return Error code.
-                 */
-                const int code();
+            /**
+             * Get error code.
+             *
+             * @return Error code.
+             */
+            const int code();
 
-                /**
-                 *	Overridden what method to get actual error message.
-                 */
-                virtual const char *what() const throw();
-            };
+            /**
+             *	Overridden what method to get actual error message.
+             */
+            virtual const char *what() const throw();
         };
     };
 };

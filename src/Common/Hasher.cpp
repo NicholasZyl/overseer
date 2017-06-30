@@ -7,9 +7,9 @@
 #include <sstream>
 #include <iostream>
 
-using namespace zylkowsk::Common::Hasher;
+using namespace zylkowsk::Common;
 
-std::string ProcessListHasher::joinList(const std::list<std::string> &processes) {
+std::string Hasher::joinList(const std::list<std::string> &processes) {
     std::stringstream joinedList;
     for (auto process : processes) {
         joinedList << process;
@@ -18,7 +18,7 @@ std::string ProcessListHasher::joinList(const std::list<std::string> &processes)
     return joinedList.str();
 }
 
-std::string ProcessListHasher::hashList(const std::list<std::string> &processes) {
+std::string Hasher::hashList(const std::list<std::string> &processes) {
     auto joinedList = joinList(processes);
     unsigned char hash[SHA_DIGEST_LENGTH];
     SHA1((unsigned char*)joinedList.c_str(), joinedList.length(), hash);

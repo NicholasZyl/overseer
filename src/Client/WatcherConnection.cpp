@@ -10,18 +10,15 @@
 #define MAX_BUFFER 2048
 
 using namespace zylkowsk::Client::WatcherConnection;
-using namespace zylkowsk::Common::Communication;
-using namespace zylkowsk::Common::ErrorHandling;
-using namespace zylkowsk::Common::NetUtils;
+using namespace zylkowsk::Common;
 
-Communicator::Communicator(class Client client, ProcessListHasher hasher) : baseClient(client), processListHasher(hasher) {}
+Communicator::Communicator(class Client client, Hasher hasher) : baseClient(client), processListHasher(hasher) {}
 
 void Communicator::registerClient(unsigned int interval) {
     baseClient.connectToServer([&interval](int socket, struct sockaddr_in serverAddress) {
         char cmd[MAX_BUFFER];
         sprintf(cmd, "%s %d", CMD_REGISTER.c_str(), interval);
         write(socket, cmd, strlen(cmd));
-        fprintf(stdout, "%s\n", cmd);
 
         char responseBuffer[MAX_BUFFER];
         ssize_t readLen;

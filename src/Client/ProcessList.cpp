@@ -12,7 +12,7 @@
 #define MAX_PROCESS_NAME 256
 
 using namespace zylkowsk::Client::ProcessList;
-using namespace zylkowsk::Common::ErrorHandling;
+using namespace zylkowsk::Common;
 
 const std::string ProcessesReader::procDir = "/proc";
 const std::string ProcessesReader::procCmdFile = "comm";

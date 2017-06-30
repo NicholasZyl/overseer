@@ -11,8 +11,7 @@
 #include <list>
 #include <string>
 
-using namespace zylkowsk::Common::Hasher;
-using namespace zylkowsk::Common::NetUtils;
+using namespace zylkowsk::Common;
 
 namespace zylkowsk {
     namespace Client {
@@ -30,7 +29,7 @@ namespace zylkowsk {
                 /**
                  *  Hasher used to prepare processes list hash.
                  */
-                ProcessListHasher processListHasher;
+                Hasher processListHasher;
 
             public:
                 /**
@@ -39,7 +38,7 @@ namespace zylkowsk {
                  *  @param client Base client used for communicating.
                  *  @param hasher Hasher used for preparing a hash of processes list.
                  */
-                Communicator(class Client client, ProcessListHasher hasher);
+                Communicator(class Client client, Hasher hasher);
 
                 /**
                  *  Send a command to register a new client on the server.

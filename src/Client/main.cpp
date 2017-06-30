@@ -11,14 +11,9 @@
 #include <iostream>
 #include <unistd.h>
 
-#define MILISECONDS_IN_SECOND 1000
-
 using namespace zylkowsk::Client::ProcessList;
 using namespace zylkowsk::Client::WatcherConnection;
-using namespace zylkowsk::Common::Communication;
-using namespace zylkowsk::Common::ErrorHandling;
-using namespace zylkowsk::Common::Hasher;
-using namespace zylkowsk::Common::NetUtils;
+using namespace zylkowsk::Common;
 
 int main(int argc, char *argv[]) {
     if (4 != argc) {
@@ -31,7 +26,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    ProcessListHasher hasher;
+    Hasher hasher;
     Client baseClient(argv[1], argv[2], TCP);
     Communicator communicator(baseClient, hasher);
 

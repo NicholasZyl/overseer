@@ -10,25 +10,25 @@
 #include <sys/wait.h>
 #include <string>
 #include <unistd.h>
+#include <sstream>
 
-using namespace zylkowsk::Common::ErrorHandling;
-using namespace zylkowsk::Common::NetUtils;
+using namespace zylkowsk::Common;
 
-#define MAX_BUFFER 128
+#define MAX_BUFFER 1024
 #define PID_BUFFER 10
 #define LISTEN_QUEUE_BACKLOG 10
 
 Server* Server::serverInstance = 0;
 
-Server::Server(std::string serverName, int port, ConnectionType type, unsigned int childProcessesLimit, bool daemon) :
-        name(serverName), type(type), maxChildProcesses(childProcessesLimit), childProcessesCount(0), isParent(true), asDaemon(daemon) {
+Server::Server(std::string serverName, int port, ConnectionType type, unsigned int childProcessesLimit, bool daemon, Logger logger) :
+        name(serverName), type(type), maxChildProcesses(childProcessesLimit), childProcessesCount(0), isParent(true), asDaemon(daemon), logger(logger) {
     if (asDaemon) {
         daemonize();
     }
     initProcess();
     createSocket(type);
     bindToPort(port);
-    logMessage(LOG_INFO, "Server started");
+    logger.log(LOG_INFO, "Server started");
     serverInstance = this;
 }
 
@@ -82,7 +82,6 @@ void Server::daemonize()
     if (-1 == daemon(0, 0)) {
         throw Exception("Unable to daemonize server with error: %s", strerror(errno));
     }
-    openlog(name.c_str(), LOG_PID, LOG_USER);
 }
 
 Server::~Server()
@@ -90,14 +89,14 @@ Server::~Server()
     if (-1 == close(socketDesc)) {
         char errorMsg[MAX_BUFFER];
         sprintf(errorMsg, "Unable to close the connection for socket %d with error: %s", socketDesc, strerror(errno));
-        logMessage(LOG_CRIT, errorMsg);
+        logger.log(LOG_CRIT, errorMsg);
     }
 
     if (isParent) {
         if (-1 == flock(lockFile, LOCK_UN)) {
             char errorMsg[MAX_BUFFER];
             sprintf(errorMsg, "Unable to unlock the lock file with error: %s", strerror(errno));
-            logMessage(LOG_CRIT, errorMsg);
+            logger.log(LOG_CRIT, errorMsg);
         }
 
         char lockFileName[MAX_BUFFER];
@@ -105,22 +104,19 @@ Server::~Server()
         if (-1 == unlink(lockFileName)) {
             char errorMsg[MAX_BUFFER];
             sprintf(errorMsg, "Unable to remove the lock file with error: %s", strerror(errno));
-            logMessage(LOG_CRIT, errorMsg);
+            logger.log(LOG_CRIT, errorMsg);
         }
 
         if (-1 == close(lockFile)) {
             char errorMsg[MAX_BUFFER];
             sprintf(errorMsg, "Unable to close the lock file descriptor with error: %s", strerror(errno));
-            logMessage(LOG_CRIT, errorMsg);
+            logger.log(LOG_CRIT, errorMsg);
         }
     }
 
     char closeServerMsg[MAX_BUFFER];
     sprintf(closeServerMsg, "Server process #%d closed", getpid());
-    logMessage(LOG_INFO, closeServerMsg);
-    if (asDaemon) {
-        closelog();
-    }
+    logger.log(LOG_INFO, closeServerMsg);
 }
 
 void Server::startListening(std::function<void(int, struct sockaddr_in)> func)
@@ -129,7 +125,7 @@ void Server::startListening(std::function<void(int, struct sockaddr_in)> func)
         if (-1 == listen(socketDesc, LISTEN_QUEUE_BACKLOG)) {
             throw Exception("Unable to listen on socket %d with backlog %d with error: %s", socketDesc, LISTEN_QUEUE_BACKLOG, strerror(errno));
         }
-        logMessage(LOG_INFO, "Server started listening");
+        logger.log(LOG_INFO, "Server started listening");
     }
 
     pid_t childPid;
@@ -150,7 +146,7 @@ void Server::startListening(std::function<void(int, struct sockaddr_in)> func)
             } else {
                 char errorMsg[MAX_BUFFER];
                 sprintf(errorMsg, "Unable to create child process with error: %s", strerror(errno));
-                logMessage(LOG_ERR, errorMsg);
+                logger.log(LOG_ERR, errorMsg);
             }
         } else {
             sleep(1);
@@ -168,25 +164,26 @@ void Server::handleClientTCP(std::function<void(int, struct sockaddr_in)> func)
     if (-1 == incomingSocket) {
         char errorMsg[MAX_BUFFER];
         sprintf(errorMsg, "Unable to accept connection from client on %s:%d with error: %s", inet_ntoa(incomingAddress.sin_addr), ntohs(incomingAddress.sin_port), strerror(errno));
-        logMessage(LOG_CRIT, errorMsg);
+        logger.log(LOG_CRIT, errorMsg);
         return;
     }
     char msg[MAX_BUFFER];
     sprintf(msg, "Server received a connection from client on %s:%d", inet_ntoa(incomingAddress.sin_addr), ntohs(incomingAddress.sin_port));
-    logMessage(LOG_NOTICE, msg);
+    logger.log(LOG_NOTICE, msg);
 
     func(incomingSocket, incomingAddress);
 
     sprintf(msg, "Server served response for client on %s:%d", inet_ntoa(incomingAddress.sin_addr), ntohs(incomingAddress.sin_port));
-    logMessage(LOG_NOTICE, msg);
+    logger.log(LOG_NOTICE, msg);
 
     if (-1 == close(incomingSocket)) {
         char errorMsg[MAX_BUFFER];
         sprintf(errorMsg, "Unable to close connection with client on %s:%d with error: with error: %s", inet_ntoa(incomingAddress.sin_addr), ntohs(incomingAddress.sin_port), strerror(errno));
-        logMessage(LOG_CRIT, errorMsg);
+        logger.log(LOG_CRIT, errorMsg);
     }
+
     sprintf(msg, "Server closed connection with client on %s:%d", inet_ntoa(incomingAddress.sin_addr), ntohs(incomingAddress.sin_port));
-    logMessage(LOG_NOTICE, msg);
+    logger.log(LOG_NOTICE, msg);
 }
 
 void Server::handleClientUDP(std::function<void(int, struct sockaddr_in)> func)
@@ -198,18 +195,18 @@ void Server::handleClientUDP(std::function<void(int, struct sockaddr_in)> func)
     if (recvfrom(socketDesc, receivedDatagram, MAX_BUFFER, 0, (struct sockaddr *) & incomingAddress, &incomingAddresLength) < 0) {
         char errorMsg[MAX_BUFFER];
         sprintf(errorMsg, "Error while receiving datagram from %s:%d with error: %s", inet_ntoa(incomingAddress.sin_addr), ntohs(incomingAddress.sin_port), strerror(errno));
-        logMessage(LOG_CRIT, errorMsg);
+        logger.log(LOG_CRIT, errorMsg);
         return;
     }
 
     char msg[MAX_BUFFER];
     sprintf(msg, "Server received a datagram \"%s\" from client on %s:%d", receivedDatagram, inet_ntoa(incomingAddress.sin_addr), ntohs(incomingAddress.sin_port));
-    logMessage(LOG_NOTICE, msg);
+    logger.log(LOG_NOTICE, msg);
 
     func(socketDesc, incomingAddress);
 
     sprintf(msg, "Server served response for client on %s:%d", inet_ntoa(incomingAddress.sin_addr), ntohs(incomingAddress.sin_port));
-    logMessage(LOG_NOTICE, msg);
+    logger.log(LOG_NOTICE, msg);
 }
 
 void Server::handleSignal(int sig)
@@ -219,7 +216,7 @@ void Server::handleSignal(int sig)
         case SIGTERM:
             char msg[MAX_BUFFER];
             sprintf(msg, "Server received signal %d", sig);
-            serverInstance->logMessage(LOG_NOTICE, msg);
+            serverInstance->logger.log(LOG_NOTICE, msg);
             serverInstance->~Server();
             exit(EXIT_SUCCESS);
         case SIGCHLD:
@@ -229,17 +226,6 @@ void Server::handleSignal(int sig)
             break;
         default:
             return;
-    }
-}
-
-void Server::logMessage(int level, const char *message)
-{
-    if (asDaemon) {
-        syslog(level, "%s", message);
-    } else if (level <= LOG_ERR) {
-        fprintf(stderr, "%s\n", message);
-    } else {
-        fprintf(stdout, "%s\n", message);
     }
 }
 

@@ -11,30 +11,28 @@
 
 namespace zylkowsk {
     namespace Common {
-        namespace Hasher {
+        /**
+         * @class ProcessListHasher
+         * A class used to get hash of the whole process list.
+         */
+        class Hasher {
             /**
-             * @class ProcessListHasher
-             * A class used to get hash of the whole process list.
+             * Helper function to join all processes names into one string.
+             *
+             * @param processes List of processes.
+             * @return Concatenated processes names.
              */
-            class ProcessListHasher {
-                /**
-                 * Helper function to join all processes names into one string.
-                 *
-                 * @param processes List of processes.
-                 * @return Concatenated processes names.
-                 */
-                std::string joinList(const std::list<std::string> &processes);
+            std::string joinList(const std::list<std::string> &processes);
 
-            public:
-                /**
-                 * Calculate hash from passed processes list.
-                 *
-                 * @param processes List of processes.
-                 * @return Hash of the processes list.
-                 */
-                std::string hashList(const std::list<std::string> &processes);
-            };
-        }
+        public:
+            /**
+             * Calculate hash from passed processes list.
+             *
+             * @param processes List of processes.
+             * @return Hash of the processes list.
+             */
+            std::string hashList(const std::list<std::string> &processes);
+        };
     }
 }
 
