@@ -7,7 +7,7 @@ include_directories(/usr/local/lib)
 include_directories(/usr/local/include)
 
 # Build Client app
-set(CLIENT_SRC src/Client/main.cpp src/Client/ProcessList.cpp src/Client/ProcessList.h src/Common/ErrorHandling.cpp src/Common/ErrorHandling.h src/Common/Hasher.cpp src/Common/Hasher.h src/Client/WatcherConnection.cpp src/Client/WatcherConnection.h src/Common/Communication.h src/Common/NetUtils.cpp src/Common/NetUtils.h src/Common/Logger.cpp src/Common/Logger.h)
+set(CLIENT_SRC src/Client/main.cpp src/Client/ProcessList.cpp src/Client/ProcessList.h src/Common/ErrorHandling.cpp src/Common/ErrorHandling.h src/Common/Hasher.cpp src/Common/Hasher.h src/Client/WatcherConnection.cpp src/Client/WatcherConnection.h src/Common/Communication.h src/Common/NetUtils.cpp src/Common/NetUtils.h src/Common/Logger.cpp src/Common/Logger.h src/Client/Application.cpp src/Client/Application.h)
 add_executable(Client ${CLIENT_SRC})
 target_link_libraries (Client ssl)
 target_link_libraries (Client crypto)

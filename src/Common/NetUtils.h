@@ -180,7 +180,7 @@ namespace zylkowsk {
              *	@return Port number.
              *	@throws zylkowsk::Common::ErrorHandling::Exception If service name cannot be resolved.
              */
-            unsigned short getPort(char *service);
+            unsigned short getPort(const char *service);
 
             /**
              *	Get binary representation of IP address from either host name or IP in decimal representation.
@@ -198,7 +198,7 @@ namespace zylkowsk {
              *	@param service Port or name of the service on which we want to connect.
              *	@param type Connection type to use.
              */
-            Client(const char *address, char *service, ConnectionType type);
+            Client(const char *address, const char *service, ConnectionType type);
 
             /**
              *	Connect to the server and process it's answer with passed function.

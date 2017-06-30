@@ -229,7 +229,7 @@ void Server::handleSignal(int sig)
     }
 }
 
-Client::Client(const char *address, char *service, ConnectionType type)
+Client::Client(const char *address, const char *service, ConnectionType type)
 {
     this->type = type;
     unsigned short port;
@@ -239,7 +239,7 @@ Client::Client(const char *address, char *service, ConnectionType type)
     setServerAddress(address, port);
 }
 
-unsigned short Client::getPort(char *serviceName)
+unsigned short Client::getPort(const char *serviceName)
 {
     char proto[3];
     if (TCP == type) {
