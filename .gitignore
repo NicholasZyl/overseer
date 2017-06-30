@@ -89,3 +89,7 @@ CTestTestfile.cmake
 
 build/
 lib/
+
+# Doxygen
+/html/
+/latex/
