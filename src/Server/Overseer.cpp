@@ -5,10 +5,12 @@
 #include "../Common/Communication.h"
 #include "../Common/ErrorHandling.h"
 #include "Overseer.h"
+#include <cstring>
+#include <dirent.h>
 #include <fstream>
 #include <sstream>
-#include <yaml-cpp/yaml.h>
 #include <sys/stat.h>
+#include <yaml-cpp/yaml.h>
 
 using namespace zylkowsk::Common;
 using namespace zylkowsk::Server::Overseer;
@@ -22,9 +24,7 @@ WatchedHost::WatchedHost(const std::string &hostIp, unsigned int interval) : ip(
     nextMessageTime = time(nullptr);
 }
 
-WatchedHost::WatchedHost(const std::string &hostIp, unsigned int interval, const time_t nextMessageExpectedTime, const std::string &processesListHash, const std::list<std::string> &processes) : ip(hostIp), interval(interval), nextMessageTime(nextMessageExpectedTime) {
-    watchProcesses(processesListHash, processesList);
-}
+WatchedHost::WatchedHost(const std::string &hostIp, unsigned int interval, const time_t nextMessageExpectedTime, const std::string &processesListHash, const std::list<std::string> &processes) : ip(hostIp), interval(interval), nextMessageTime(nextMessageExpectedTime), processesListHash(processesListHash), processesList(processesList) {}
 
 void WatchedHost::watchProcesses(const std::string &hash, const std::list<std::string> &processes) {
     processesListHash = hash;
@@ -87,7 +87,7 @@ void HostsRegistrar::saveWatchedHostData(WatchedHost &host) {
     storedHost << YAML::Key << "processes_hash";
     storedHost << YAML::Value << host.getProcessesListHash();
     storedHost << YAML::Key << "processes";
-    storedHost << YAML::Value << host.getProcessesList();
+    storedHost << YAML::Value << YAML::Block << host.getProcessesList();
     storedHost << YAML::EndMap;
 
     std::ofstream hostFile(getHostStorageFileName(host.getIp()));
@@ -100,7 +100,10 @@ WatchedHost HostsRegistrar::getWatchedHostData(const std::string &hostIp) {
     try {
         YAML::Node storedHost = YAML::LoadFile(hostFile);
 
-        return WatchedHost(hostIp, storedHost["interval"].as<unsigned>(), storedHost["next_message_expected"].as<time_t>(), storedHost["processes_hash"].as<std::string>(), storedHost["processes"].as<std::list<std::string>>());
+        return WatchedHost(hostIp, storedHost["interval"].as<unsigned>(),
+                           storedHost["next_message_expected"].as<time_t>(),
+                           storedHost["processes_hash"].as<std::string>(),
+                           storedHost["processes"].as<std::list<std::string>>());
     } catch (YAML::BadFile) {
         throw Exception(ERR_CODE_UNKNOWN_CMD, ERR_UNKNOWN_CMD);
     }
@@ -135,4 +138,25 @@ void HostsRegistrar::storeHostChangedProcessesList(const std::string &hostIp, co
     WatchedHost host = getWatchedHostData(hostIp);
     host.watchProcesses(processesListHash, processes);
     saveWatchedHostData(host);
+}
+
+std::list<WatchedHost> HostsRegistrar::getWatchedHosts() {
+    DIR *hostsStorage;
+    struct dirent *hostStorageFile;
+    if (!(hostsStorage = opendir(storageDir.c_str()))) {
+        throw Exception("Unable to open %s directory, with error: %s", storageDir.c_str(), strerror(errno));
+    }
+    std::list<WatchedHost> hosts;
+    while ((hostStorageFile = readdir(hostsStorage))) {
+        std::string hostFileName = std::string(hostStorageFile->d_name);
+        std::size_t ext = hostFileName.find(".yml");
+        if (std::string::npos == ext) {
+            continue;
+        }
+        std::string host = hostFileName.substr(0, ext);
+        hosts.push_back(getWatchedHostData(host));
+    }
+    closedir(hostsStorage);
+
+    return hosts;
 }

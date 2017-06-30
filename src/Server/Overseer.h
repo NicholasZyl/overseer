@@ -190,6 +190,13 @@ namespace zylkowsk {
                  */
                 void storeHostChangedProcessesList(const std::string &hostIp, const std::string &processesListHash,
                                                    const std::list<std::string> &processes);
+
+                /**
+                 * Get list of all watched hosts.
+                 *
+                 * @return List with all watched hosts.
+                 */
+                std::list<WatchedHost> getWatchedHosts();
             };
         }
     }

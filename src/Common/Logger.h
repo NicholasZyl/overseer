@@ -23,6 +23,14 @@ namespace zylkowsk {
 
         public:
             /**
+             * Format given time with expected log format.
+             *
+             * @param timestamp Unix timestamp to format.
+             * @return Formatted time.
+             */
+            static const std::string formatTime(time_t timestamp);
+
+            /**
              * Constructor.
              *
              * @param name Name used for syslog.

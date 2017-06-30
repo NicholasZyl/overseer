@@ -2,8 +2,18 @@
 // Created by Mikołaj Żyłkowski on 30.06.2017.
 //
 
-#include <syslog.h>
 #include "Logger.h"
+#include <ctime>
+#include <syslog.h>
+
+#define TIME_BUFFER 20
+
+const std::string zylkowsk::Common::Logger::formatTime(time_t timestamp) {
+    char formattedTime[TIME_BUFFER];
+    strftime(formattedTime, sizeof(formattedTime), "%Y-%m-%d %H:%M:%S", localtime(&timestamp));
+
+    return std::string(formattedTime);
+}
 
 zylkowsk::Common::Logger::Logger(std::string name, bool useSyslog) : useSyslog(useSyslog) {
     if (this->useSyslog) {
@@ -22,11 +32,13 @@ void zylkowsk::Common::Logger::log(int level, std::string message) {
 }
 
 void zylkowsk::Common::Logger::log(int level, const char *message) {
+    time_t now = time(nullptr);
+
     if (useSyslog) {
-        syslog(level, "%s\n", message);
+        syslog(level, "%s: %s\n", formatTime(now).c_str(), message);
     } else if (level <= LOG_ERR) {
-        fprintf(stderr, "%s\n", message);
+        fprintf(stderr, "%s: %s\n", formatTime(now).c_str(), message);
     } else {
-        fprintf(stdout, "%s\n", message);
+        fprintf(stdout, "%s: %s\n", formatTime(now).c_str(), message);
     }
 }

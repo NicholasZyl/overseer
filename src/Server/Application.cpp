@@ -17,13 +17,20 @@ using namespace std::placeholders;
 using namespace zylkowsk::Common;
 using namespace zylkowsk::Server;
 
-Application::Application(HostsRegistrar hostsRegistrar, Hasher hasher, Logger logger)
-        : registrar(hostsRegistrar), hasher(hasher), logger(logger) {}
+Application::Application(HostsRegistrar hostsRegistrar, Hasher hasher, HostsSubmissionMonitor monitor, Logger logger)
+        : registrar(hostsRegistrar), hasher(hasher), monitor(monitor), logger(logger) {}
 
 void Application::run(int port, unsigned int  processesLimit, bool asDaemon) {
-    class Server server("Overseer", port, TCP, processesLimit, asDaemon, logger);
-    auto connectionProcessing = std::bind(&Application::processIncomingConnection, this, _1, _2);
-    server.startListening(connectionProcessing);
+    pid_t child = fork();
+    if (0 == child) {
+        monitor.start();
+    } else if (0 < child) {
+        class Server server("Overseer", port, TCP, processesLimit, asDaemon, logger);
+        auto connectionProcessing = std::bind(&Application::processIncomingConnection, this, _1, _2);
+        server.startListening(connectionProcessing);
+    } else {
+        throw Exception("Unable to create child process for Checker module with error: %s", strerror(errno));
+    }
 }
 
 void Application::processIncomingConnection(int incomingSocket, struct sockaddr_in incomingAddress) {

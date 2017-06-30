@@ -9,9 +9,9 @@
 #include "Application.h"
 #include "ProcessList.h"
 #include "WatcherConnection.h"
+#include <getopt.h>
 #include <iostream>
 #include <unistd.h>
-#include <getopt.h>
 
 #define DEFAULT_INTERVAL 60
 

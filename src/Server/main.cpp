@@ -8,13 +8,16 @@
 #include "../Common/Logger.h"
 #include "Overseer.h"
 #include "Application.h"
+#include "Checker.h"
 #include <cstdlib>
 #include <getopt.h>
 
 #define DEFAULT_CHILD_PROCESSES_LIMIT 10
+#define DEFAULT_CHECKER_INTERVAL 30
 
 using namespace zylkowsk::Common;
 using namespace zylkowsk::Server;
+using namespace zylkowsk::Server::Checker;
 using namespace zylkowsk::Server::Overseer;
 
 void helpInfo(char *name, int exitCode);
@@ -23,10 +26,12 @@ int main(int argc, char *argv[]) {
     int port = SERVER_DEFAULT_PORT;
     bool runAsDaemon = true;
     unsigned int childProcessesLimit = DEFAULT_CHILD_PROCESSES_LIMIT;
+    unsigned int checkerInterval = DEFAULT_CHECKER_INTERVAL;
 
-    const char* const options = "hl:np:";
+    const char* const options = "hi:l:np:";
     const struct option longOptions[] = {
         { "help", 0, NULL, 'h' },
+        { "interval", 1, NULL, 'i' },
         { "limit", 1, NULL, 'l' },
         { "no-daemon", 0, NULL, 'n' },
         { "port", 1, NULL, 'p' },
@@ -38,6 +43,9 @@ int main(int argc, char *argv[]) {
         switch (opt) {
             case 'h':
                 helpInfo(argv[0], EXIT_SUCCESS);
+                break;
+            case 'i':
+                checkerInterval = (unsigned int) atoi(optarg);
                 break;
             case 'l':
                 childProcessesLimit = (unsigned int) atoi(optarg);
@@ -61,7 +69,8 @@ int main(int argc, char *argv[]) {
         HostsRegistrar registrar;
         Hasher hasher;
         Logger logger("Overseer", runAsDaemon);
-        Application overseer(registrar, hasher, logger);
+        HostsSubmissionMonitor monitor(checkerInterval, registrar, logger);
+        Application overseer(registrar, hasher, monitor, logger);
         overseer.run(port, childProcessesLimit, runAsDaemon);
     } catch (Exception &e) {
         fprintf(stderr, "%s\n", e.what());
@@ -76,6 +85,7 @@ void helpInfo(char *name, int exitCode) {
     fprintf(stdout, "Usage: %s options\n", name);
     fprintf(stdout,
             " -h  --help             Display this information.\n"
+            " -i  --interval int     Set interval for Checker module.\n"
             " -l  --limit limit      Set limit for child processes.\n"
             " -n  --no-daemon        Do not run as a daemon.\n"
             " -p  --port port_num    Use port different than default.\n"

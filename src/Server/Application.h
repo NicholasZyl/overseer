@@ -9,8 +9,10 @@
 #include "../Common/Hasher.h"
 #include "../Common/Logger.h"
 #include "Overseer.h"
+#include "Checker.h"
 
 using namespace zylkowsk::Common;
+using namespace zylkowsk::Server::Checker;
 using namespace zylkowsk::Server::Overseer;
 
 namespace zylkowsk {
@@ -29,6 +31,11 @@ namespace zylkowsk {
              * Hasher used to confirm sent processes list.
              */
             Hasher hasher;
+
+            /**
+             * Monitor that's checking if every watched host submit processes list at expected time.
+             */
+            HostsSubmissionMonitor monitor;
 
             /**
              * A logger instance.
@@ -67,12 +74,13 @@ namespace zylkowsk {
              *
              * @param hostsRegistrar Registrar used to watch hosts.
              * @param hasher Hasher used to confirm sent processes list.
+             * @param monitor Monitor to check if hosts submit their messages at expected time.
              * @param logger A logger instance.
              */
-            Application(HostsRegistrar hostsRegistrar, Hasher hasher, Logger logger);
+            Application(HostsRegistrar hostsRegistrar, Hasher hasher, HostsSubmissionMonitor monitor, Logger logger);
 
             /**
-             * Run Server application with given configuration.
+             * Server application with given configuration. Monitor will be run in a child process;
              *
              * @param port Port on which server should be listening.
              * @param processesLimit Limit of the child processes used to process requests.
