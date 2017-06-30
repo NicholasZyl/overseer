@@ -156,6 +156,11 @@ namespace zylkowsk {
 
             public:
                 /**
+                 * Constructor.
+                 */
+                HostsRegistrar();
+
+                /**
                  * Register a new client as a watched host.
                  *
                  * @param hostIp IP address of the watched host.

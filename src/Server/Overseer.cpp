@@ -8,6 +8,7 @@
 #include <fstream>
 #include <sstream>
 #include <yaml-cpp/yaml.h>
+#include <sys/stat.h>
 
 using namespace zylkowsk::Common::Communication;
 using namespace zylkowsk::Common::ErrorHandling;
@@ -56,6 +57,14 @@ const std::list<std::string, std::allocator<std::string>> &WatchedHost::getProce
     return processesList;
 }
 
+HostsRegistrar::HostsRegistrar() {
+    if (-1 == mkdir(storageDir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
+        if (EEXIST != errno) {
+            throw Exception("Cannot create storage dir");
+        }
+    }
+}
+
 std::string HostsRegistrar::getHostStorageFileName(const std::string &hostIp) {
     std::stringstream hostFileName;
     hostFileName << storageDir << hostIp << ".yml";
@@ -79,7 +88,7 @@ void HostsRegistrar::saveWatchedHostData(WatchedHost &host) {
     storedHost << YAML::Key << "processes_hash";
     storedHost << YAML::Value << host.getProcessesListHash();
     storedHost << YAML::Key << "processes";
-    storedHost << YAML::Block << host.getProcessesList();
+    storedHost << YAML::Value << host.getProcessesList();
     storedHost << YAML::EndMap;
 
     std::ofstream hostFile(getHostStorageFileName(host.getIp()));

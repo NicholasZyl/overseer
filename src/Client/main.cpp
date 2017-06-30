@@ -22,7 +22,7 @@ using namespace zylkowsk::Common::NetUtils;
 
 int main(int argc, char *argv[]) {
     if (4 != argc) {
-        fprintf(stderr, "Usage: %s <Server IP> <Server Port> <Interval>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <Server host> <Server Port> <Interval>\n", argv[0]);
         return 1;
     }
     int interval;
@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
         while (true) {
             communicator.sendProcessesList(processesReader.getRunningProcesses());
 
-            sleep((unsigned) (interval * MILISECONDS_IN_SECOND));
+            sleep((unsigned) interval);
         }
     } catch (Exception &e) {
         fprintf(stderr, "%s\n", e.what());

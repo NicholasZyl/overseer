@@ -11,7 +11,8 @@ services:
       project:
         aliases:
           - server.local
-    entrypoint: ./build/Server
+    volumes:
+      - ./:/project
 
   client_1:
     container_name: client_1
@@ -22,6 +23,8 @@ services:
       project:
         aliases:
           - nginx.local
+    volumes:
+      - ./:/project
     entrypoint: nginx -g "daemon off;"
 
   client_2:
@@ -33,6 +36,8 @@ services:
       project:
         aliases:
           - supervisor.local
+    volumes:
+      - ./:/project
     entrypoint: supervisord -n
 
 networks:

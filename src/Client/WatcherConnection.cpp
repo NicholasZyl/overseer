@@ -7,7 +7,7 @@
 #include "WatcherConnection.h"
 #include <unistd.h>
 
-#define MAX_BUFFER 1024
+#define MAX_BUFFER 2048
 
 using namespace zylkowsk::Client::WatcherConnection;
 using namespace zylkowsk::Common::Communication;
@@ -21,6 +21,7 @@ void Communicator::registerClient(unsigned int interval) {
         char cmd[MAX_BUFFER];
         sprintf(cmd, "%s %d", CMD_REGISTER.c_str(), interval);
         write(socket, cmd, strlen(cmd));
+        fprintf(stdout, "%s\n", cmd);
 
         char responseBuffer[MAX_BUFFER];
         ssize_t readLen;
@@ -46,8 +47,8 @@ void Communicator::sendProcessesList(std::list<std::string> processes) {
 
         char responseBuffer[MAX_BUFFER];
         ssize_t readLen;
-        while (0 < (readLen = read(socket, responseBuffer, MAX_BUFFER))) {
-            responseBuffer[readLen] = 0;
+        if (0 < (readLen = read(socket, responseBuffer, MAX_BUFFER))) {
+            responseBuffer[readLen] = '\0';
         }
         auto response = std::string(responseBuffer);
 
@@ -59,8 +60,8 @@ void Communicator::sendProcessesList(std::list<std::string> processes) {
             write(socket, "\n", strlen("\n"));
 
             memset(responseBuffer, 0, sizeof(responseBuffer));
-            while (0 < (readLen = read(socket, responseBuffer, MAX_BUFFER))) {
-                responseBuffer[readLen] = 0;
+            if (0 < (readLen = read(socket, responseBuffer, MAX_BUFFER))) {
+                responseBuffer[readLen] = '\0';
             }
             response = std::string(responseBuffer);
 

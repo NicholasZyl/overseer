@@ -14,11 +14,27 @@ using namespace zylkowsk::Server::Overseer;
 
 namespace zylkowsk {
     namespace Server {
+        /**
+         * @class Server
+         * Base Overseer server class used to listen for connections and processing them.
+         */
         class Server {
+            /**
+             * Registrar used to watch hosts.
+             */
             HostsRegistrar registrar;
 
+            /**
+             * Hasher used to confirm sent processes list.
+             */
             ProcessListHasher hasher;
 
+            /**
+             * Properly process client connection.
+             *
+             * @param incomingSocket
+             * @param incomingAddress
+             */
             void processIncomingConnection(int incomingSocket, struct sockaddr_in incomingAddress);
 
             void processHostRegistration(int incomingSocket, std::string hostIp, std::string commandArgument);
@@ -28,7 +44,7 @@ namespace zylkowsk {
         public:
             Server(HostsRegistrar hostsRegistrar, ProcessListHasher processListHasher);
 
-            void run();
+            void run(int port, unsigned int  processesLimit, bool asDaemon);
         };
     }
 }
