@@ -2,7 +2,7 @@
 // Created by Mikołaj Żyłkowski on 22.06.2017.
 //
 
-#include "ErrorHandling.h"
+#include "Common.h"
 
 using namespace zylkowsk::Common;
 

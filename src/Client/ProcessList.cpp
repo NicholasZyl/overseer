@@ -2,8 +2,8 @@
 // Created by Mikołaj Żyłkowski on 21.06.2017.
 //
 
-#include "../Common/ErrorHandling.h"
-#include "ProcessList.h"
+#include "../Common/Common.h"
+#include "Client.h"
 #include <errno.h>
 #include <dirent.h>
 #include <cstdlib>

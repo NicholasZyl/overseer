@@ -2,10 +2,8 @@
 // Created by Mikołaj Żyłkowski on 29.06.2017.
 //
 
-#include "../Common/Communication.h"
-#include "../Common/ErrorHandling.h"
-#include "../Common/NetUtils.h"
-#include "Application.h"
+#include "../Common/Common.h"
+#include "Server.h"
 #include <functional>
 #include <sstream>
 #include <syslog.h>
@@ -17,7 +15,7 @@ using namespace std::placeholders;
 using namespace zylkowsk::Common;
 using namespace zylkowsk::Server;
 
-Application::Application(HostsRegistrar hostsRegistrar, Hasher hasher, HostsSubmissionMonitor monitor, Logger logger)
+Application::Application(Server::Overseer::HostsRegistrar hostsRegistrar, Hasher hasher, Server::Checker::HostsSubmissionMonitor monitor, Logger logger)
         : registrar(hostsRegistrar), hasher(hasher), monitor(monitor), logger(logger) {}
 
 void Application::run(int port, unsigned int  processesLimit, bool asDaemon) {

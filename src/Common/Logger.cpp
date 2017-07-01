@@ -2,7 +2,7 @@
 // Created by Mikołaj Żyłkowski on 30.06.2017.
 //
 
-#include "Logger.h"
+#include "Common.h"
 #include <ctime>
 #include <syslog.h>
 

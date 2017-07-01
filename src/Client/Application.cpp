@@ -2,16 +2,15 @@
 // Created by Mikołaj Żyłkowski on 30.06.2017.
 //
 
-#include "../Common/Communication.h"
-#include "../Common/ErrorHandling.h"
-#include "Application.h"
+#include "../Common/Common.h"
+#include "Client.h"
 #include <cerrno>
 #include <stdlib.h>
 #include <zconf.h>
 
 using namespace zylkowsk::Client;
 
-Application::Application(Communicator communicator, ProcessesReader processesReader) : communicator(communicator), processesReader(processesReader) {}
+Application::Application(Client::WatcherConnection::Communicator communicator, Client::ProcessList::ProcessesReader processesReader) : communicator(communicator), processesReader(processesReader) {}
 
 void Application::run(unsigned int interval, bool asDaemon) {
     try {

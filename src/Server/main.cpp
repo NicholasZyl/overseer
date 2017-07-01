@@ -2,13 +2,8 @@
 // Created by Mikołaj Żyłkowski on 27.06.2017.
 //
 
-#include "../Common/Communication.h"
-#include "../Common/ErrorHandling.h"
-#include "../Common/Hasher.h"
-#include "../Common/Logger.h"
-#include "Overseer.h"
-#include "Application.h"
-#include "Checker.h"
+#include "../Common/Common.h"
+#include "Server.h"
 #include <cstdlib>
 #include <getopt.h>
 

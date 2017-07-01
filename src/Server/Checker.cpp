@@ -2,14 +2,14 @@
 // Created by Mikołaj Żyłkowski on 01.07.2017.
 //
 
-#include "Checker.h"
+#include "Server.h"
 #include <unistd.h>
 #include <sstream>
 #include <syslog.h>
 
 using namespace zylkowsk::Server::Checker;
 
-HostsSubmissionMonitor::HostsSubmissionMonitor(unsigned int interval, HostsRegistrar registrar, Logger logger) : interval(interval), registrar(registrar), logger(logger) {}
+HostsSubmissionMonitor::HostsSubmissionMonitor(unsigned int interval, Server::Overseer::HostsRegistrar registrar, Logger logger) : interval(interval), registrar(registrar), logger(logger) {}
 
 void HostsSubmissionMonitor::start() {
     while (true) {

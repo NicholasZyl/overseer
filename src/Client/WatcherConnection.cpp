@@ -2,9 +2,8 @@
 // Created by Mikołaj Żyłkowski on 26.06.2017.
 //
 
-#include "../Common/Communication.h"
-#include "../Common/ErrorHandling.h"
-#include "WatcherConnection.h"
+#include "../Common/Common.h"
+#include "Client.h"
 #include <unistd.h>
 
 #define MAX_BUFFER 2048

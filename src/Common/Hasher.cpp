@@ -2,10 +2,10 @@
 // Created by Mikołaj Żyłkowski on 22.06.2017.
 //
 
-#include "Hasher.h"
+#include "Common.h"
+#include <iostream>
 #include <openssl/sha.h>
 #include <sstream>
-#include <iostream>
 
 using namespace zylkowsk::Common;
 

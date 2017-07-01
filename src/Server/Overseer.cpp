@@ -2,9 +2,8 @@
 // Created by Mikołaj Żyłkowski on 27.06.2017.
 //
 
-#include "../Common/Communication.h"
-#include "../Common/ErrorHandling.h"
-#include "Overseer.h"
+#include "../Common/Common.h"
+#include "Server.h"
 #include <cstring>
 #include <dirent.h>
 #include <fstream>

@@ -1,17 +1,26 @@
 //
-// Created by Mikołaj Żyłkowski on 27.06.2017.
+// Created by Mikołaj Żyłkowski on 01.07.2017.
 //
 
-#ifndef PROJEKT_OVERSEER_H
-#define PROJEKT_OVERSEER_H
+#ifndef PROJEKT_SERVER_H
+#define PROJEKT_SERVER_H
 
 
-#include <ctime>
-#include <list>
-#include <string>
+#include "../Common/Common.h"
+
+using namespace zylkowsk::Common;
 
 namespace zylkowsk {
+    /**
+     * @namespace Server
+     * Separate namespace for the Server part of the application.
+     */
     namespace Server {
+
+        /**
+         * @namespace Overseer
+         * A module responsible for registering and maintaining a list of watched hosts.
+         */
         namespace Overseer {
             /**
              * @class WatchedHost
@@ -199,8 +208,121 @@ namespace zylkowsk {
                 std::list<WatchedHost> getWatchedHosts();
             };
         }
+
+        /**
+         * @namespace Checker
+         * A module responsible for monitoring all watched hosts and checking if every one of them send processes list in expected time.
+         */
+        namespace Checker {
+            /**
+             * @class HostsSubmissionMonitor
+             * Class that monitors if every watched host send processes within expected time.
+             */
+            class HostsSubmissionMonitor {
+                /**
+                 * How often monitor should scan watched hosts.
+                 */
+                unsigned int interval;
+
+                /**
+                 * Registrar used to get all watched processes
+                 */
+                Server::Overseer::HostsRegistrar registrar;
+
+                /**
+                 * Logger instance
+                 */
+                Logger logger;
+
+            public:
+                /**
+                 * Constructor with all needed dependencies injected.
+                 * @param interval How often scan hosts.
+                 * @param registrar Registrar instance.
+                 * @param logger Logger instance.
+                 */
+                HostsSubmissionMonitor(unsigned int interval, Server::Overseer::HostsRegistrar registrar, Logger logger);
+
+                /**
+                 * Start scanning watched hosts.
+                 */
+                void start();
+            };
+        }
+
+        /**
+         * @class Application
+         * Base Overseer server class used to listen for connections and processing them.
+         */
+        class Application {
+            /**
+             * Registrar used to watch hosts.
+             */
+            Server::Overseer::HostsRegistrar registrar;
+
+            /**
+             * Hasher used to confirm sent processes list.
+             */
+            Hasher hasher;
+
+            /**
+             * Monitor that's checking if every watched host submit processes list at expected time.
+             */
+            Server::Checker::HostsSubmissionMonitor monitor;
+
+            /**
+             * A logger instance.
+             */
+            Logger logger;
+
+            /**
+             * Properly process client connection.
+             *
+             * @param incomingSocket
+             * @param incomingAddress
+             */
+            void processIncomingConnection(int incomingSocket, struct sockaddr_in incomingAddress);
+
+            /**
+             * Process new host registration action.
+             *
+             * @param incomingSocket Connection socket descriptor.
+             * @param hostIp IP of the watched host.
+             * @param commandArgument Argument passed to the command from the Client.
+             */
+            void processHostRegistration(int incomingSocket, std::string hostIp, std::string commandArgument);
+
+            /**
+             * Process receving message with processes list from registered host.
+             *
+             * @param incomingSocket Connection socket descriptor.
+             * @param hostIp IP of the watched host.
+             * @param commandArgument Argument passed to the command from the Client.
+             */
+            void processHostProcessesMessage(int incomingSocket, std::string hostIp, std::string commandArgument);
+
+        public:
+            /**
+             * Constructor with all dependencies.
+             *
+             * @param hostsRegistrar Registrar used to watch hosts.
+             * @param hasher Hasher used to confirm sent processes list.
+             * @param monitor Monitor to check if hosts submit their messages at expected time.
+             * @param logger A logger instance.
+             */
+            Application(Server::Overseer::HostsRegistrar hostsRegistrar, Hasher hasher, Server::Checker::HostsSubmissionMonitor monitor, Logger logger);
+
+            /**
+             * Server application with given configuration. Monitor will be run in a child process;
+             *
+             * @param port Port on which server should be listening.
+             * @param processesLimit Limit of the child processes used to process requests.
+             * @param asDaemon Should be run as a daemon.
+             */
+            void run(int port, unsigned int processesLimit, bool asDaemon);
+        };
     }
 }
 
 
-#endif //PROJEKT_OVERSEER_H
+#endif //PROJEKT_SERVER_H

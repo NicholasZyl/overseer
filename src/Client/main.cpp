@@ -2,13 +2,8 @@
 // Created by Mikołaj Żyłkowski on 22.06.2017.
 //
 
-#include "../Common/Communication.h"
-#include "../Common/ErrorHandling.h"
-#include "../Common/Hasher.h"
-#include "../Common/NetUtils.h"
-#include "Application.h"
-#include "ProcessList.h"
-#include "WatcherConnection.h"
+#include "../Common/Common.h"
+#include "Client.h"
 #include <getopt.h>
 #include <iostream>
 #include <unistd.h>
